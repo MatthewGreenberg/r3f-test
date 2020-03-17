@@ -12,7 +12,7 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass'
-import { useSpring, a, useTransition } from 'react-spring/three'
+import { useSpring, a, config } from 'react-spring/three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { SSAOEffect } from 'postprocessing'
@@ -69,6 +69,7 @@ const GameBoy = () => {
   const [hovered, set] = useState(false)
   const props = useSpring({
     scale: hovered ? [3.5, 3.5, 3.5] : [3, 3, 3],
+    config: config.wobbly,
   })
 
   useEffect(() => {
