@@ -10,20 +10,17 @@ import {
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
-import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass'
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass'
-import AdditiveBlendingShader from './AdditiveBlendingShader'
 import { useSpring, a, useTransition } from 'react-spring/three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+import { SSAOEffect } from 'postprocessing'
 
 extend({
   EffectComposer,
   ShaderPass,
   RenderPass,
-  AfterimagePass,
   UnrealBloomPass,
   OrbitControls,
 })
@@ -48,8 +45,31 @@ const Plane = props => {
   )
 }
 
-const Car = () => {
+function Box(props) {
+  return (
+    <a.mesh
+      onPointerOver={() => props.set(true)}
+      onPointerOut={() => props.set(false)}
+      scale={[1, 1, 1]}
+      position={[0, 0, 0]}
+    >
+      <boxBufferGeometry attach="geometry" args={[10, 10, 10]} />
+      <meshPhongMaterial
+        opacity={0.0}
+        transparent={true}
+        attach="material"
+        color={'pink'}
+      />
+    </a.mesh>
+  )
+}
+
+const GameBoy = () => {
   const [model, setModel] = useState()
+  const [hovered, set] = useState(false)
+  const props = useSpring({
+    scale: hovered ? [3.5, 3.5, 3.5] : [3, 3, 3],
+  })
 
   useEffect(() => {
     return new GLTFLoader().load(
@@ -62,14 +82,17 @@ const Car = () => {
   }
   console.log(model)
   return (
-    <mesh>
-      <primitive
-        castShadow
-        recieveShadow
-        scale={[0.01, 0.01, 0.01]}
-        object={model.scene}
-      />
-    </mesh>
+    <>
+      <Box set={set} />
+      <mesh position={[0, -4, 0]}>
+        <a.primitive
+          castShadow
+          recieveShadow
+          scale={props.scale}
+          object={model.scene}
+        />
+      </mesh>
+    </>
   )
 }
 
@@ -86,12 +109,12 @@ function Effect() {
   return (
     <effectComposer ref={composer} args={[gl]}>
       <renderPass attachArray="passes" scene={scene} camera={camera} />
-      <unrealBloomPass attachArray="passes" args={[aspect, 0.5, 0.5, 0.25]} />
+      <unrealBloomPass attachArray="passes" args={[aspect, 0.4, 0.2, 0.25]} />
 
       <shaderPass
         attachArray="passes"
         args={[FXAAShader]}
-        uniforms-resolution-value={[0.1 / size.width, 1 / size.height]}
+        uniforms-resolution-value={[0.4 / size.width, 1 / size.height]}
         renderToScreen
       />
     </effectComposer>
@@ -162,21 +185,13 @@ function Particles({ count, mouse }) {
   })
   return (
     <>
-      <pointLight ref={light} distance={10} intensity={8} color="lightblue" />
+      <pointLight ref={light} distance={10} intensity={10} color="lightblue" />
       <instancedMesh ref={mesh} args={[null, null, count]}>
         <dodecahedronBufferGeometry attach="geometry" args={[0.2, 0]} />
         <meshPhongMaterial attach="material" color="#777777" />
       </instancedMesh>
     </>
   )
-}
-
-function Dolly() {
-  // This one makes the camera move in and out
-  useFrame(({ clock, camera }) =>
-    camera.updateProjectionMatrix(void (camera.position.y = 5))
-  )
-  return null
 }
 
 function App() {
@@ -191,7 +206,7 @@ function App() {
       <Canvas
         onMouseMove={onMouseMove}
         camera={{
-          position: [14, 8, 9],
+          position: [3, 0, 20],
         }}
         onCreated={({ gl }) => {
           gl.shadowMap.enabled = true
@@ -203,31 +218,30 @@ function App() {
           enabledDamping
           enableZoom={false}
           maxPolarAngle={-Math.PI}
-          minPolarAngle={Math.PI / 3}
+          minPolarAngle={Math.PI / 2}
           dampingFactor={0.5}
         />
 
-        <ambientLight />
-        {/* <spotLight
-          color="white"
-          intensity={15}
+        <spotLight
+          color="blue"
+          intensity={2}
           castShadow
           penumbra={1}
-          position={[0, 0, 380]}
-        /> */}
-        <pointLight castShadow position={[0, 10, 15]} intensity={2} />
-        <pointLight castShadow position={[-20, 30, 15]} intensity={5} />
+          position={[0, 100, 100]}
+        />
+        <pointLight castShadow position={[0, 10, -15]} intensity={2} />
+        <pointLight castShadow position={[-20, 30, 15]} intensity={2} />
         <Particles count={500} mouse={mouse} />
         <spotLight
           color="orange"
-          intensity={8}
+          intensity={3}
           castShadow
           penumbra={1}
-          position={[0, 7, 7]}
+          position={[-5, 7, 7]}
         />
         <Plane />
         <Effect />
-        <Car />
+        <GameBoy />
       </Canvas>
     </>
   )
